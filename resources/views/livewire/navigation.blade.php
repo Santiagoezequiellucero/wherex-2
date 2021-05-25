@@ -1,28 +1,21 @@
-<style>
-    #navigation-menu{
-        height: calc(100vh - 4rem);
-    }
-
-    .navigation-link:hover .navigation-submenu{
-        display: block !important;
-    }
-</style>
-
-<header class="bg-trueGray-600 sticky top-0">
-    <div class="container flex items-center h-16">
+<header class="bg-trueGray-600 sticky top-0 z-50" x-data="dropdown()">
+    <div class="container flex items-center h-16 justify-between md:justify-start">
         <a
-            class="flex flex-col items-center justify-center px-4 bg-white bg-opacity-25 text-white cursor-pointer font-semibold h-full">
+            :class="{'bg-opacity-100 text-blue-500' : open}"
+            x-on:click="show()"
+            class="flex flex-col items-center justify-center order-last md:order-first px-6 md:px-4 bg-white bg-opacity-25 text-white cursor-pointer font-semibold h-full">
             <svg class="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
                 <path class="inline-flex" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 6h16M4 12h16M4 18h16" />
+                d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-            <span>Categorías</span>
+            <span class="text-sm hidden md:block">Categorías</span>
         </a>
-
-        @livewire('search')
+        <div class="flex-1 hidden md:block">
+            @livewire('search')
+        </div>        
 
         <!-- Settings Dropdown -->
-        <div class="mx-6 relative">
+        <div class="mx-6 relative hidden md:block">
             @auth
                 <x-jet-dropdown align="right" width="48">
                     <x-slot name="trigger">
@@ -80,68 +73,105 @@
             @endauth
         </div>
 
-        @livewire('dropdown-cart')
+        <div class="hidden md:block">
+            @livewire('dropdown-cart')
+        </div>
     </div>
 
-    <nav id="navigation-menu" class="bg-trueGray-700 bg-opacity-25 w-full absolute">
-        <div class="container h-full">
-            <div class="grid grid-cols-4 h-full relative">
-                <ul class="bg-white">
-                    @foreach ($categories as $category )
-                        <li class="navigation-link text-trueGray-500 hover:bg-blue-500 hover:text-white">
-                            <a href="" class="py-2 px-4 text-sm flex items-center">
-                                <span class="flex justify-center w-9">
-                                    {!!$category->icon!!}
-                                </span>
-                                {{$category->name}}
-                            </a>
+    <nav id="navigation-menu" 
+        :class="{'block': open, 'hidden': !open}"
+            class="bg-trueGray-700 bg-opacity-25 w-full absolute hidden">
+            {{-- Menu computadora --}}
+            <div class="container h-full hidden md:block">
+                <div 
+                    x-on:click.away="close()"
+                    class="grid grid-cols-4 h-full relative">
+                    <ul class="bg-white">
+                        @foreach ($categories as $category )
+                            <li class="navigation-link text-trueGray-500 hover:bg-blue-500 hover:text-white">
+                                <a href="{{route('categories.show', $category)}}" class="py-2 px-4 text-sm flex items-center">
+                                    <span class="flex justify-center w-9">
+                                        {!!$category->icon!!}
+                                    </span>
+                                    {{$category->name}}
+                                </a>
 
-                            <div class="navigation-submenu bg-gray-100 absolute w-3/4 h-full top-0 right-0 hidden">
-                                <div class="col-span-3 bg-gray-100">
-                                    <div class="grid grid-cols-4 py-4 p-4">
-                                        <div>
-                                            <p class="text-lg font-bold text-center text-trueGray-500 mb-3">Subcategorías</p>
-                                            <ul>
-                                                @foreach ($category->subcategories as $subcategory )
-                                                    <li>
-                                                        <a href="" class="text-trueGray-500 inline-block font-semibold py-1 px-4 hover:text-blue-500">{{$subcategory->name}}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                        </div>                          
-                                            
-                
-                                        <div class="col-span-3">
-                                            <img class="h-64 w-full object-cover object-center" src="{{Storage::url($category->image)}}" >
-                                        </div>
-                
-                                    </div>
+                                <div class="navigation-submenu bg-gray-100 absolute w-3/4 h-full top-0 right-0 hidden">
+                                    <x-navigation-subcategories :category="$category"/>
                                 </div>
-                            </div>
-                        </li>
-                    @endforeach
-                </ul>
-                <div class="col-span-3 bg-gray-100">
-                    <div class="grid grid-cols-4 py-4 p-4">
-                        <div>
-                            <p class="text-lg font-bold text-center text-trueGray-500 mb-3">Subcategorías</p>
-                            <ul>
-                                @foreach ($category->subcategories as $subcategory )
-                                    <li>
-                                        <a href="" class="text-trueGray-500 inline-block font-semibold py-1 px-4 hover:text-blue-500">{{$subcategory->name}}</a>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>                          
-                            
-
-                        <div class="col-span-3">
-                            <img class="h-64 w-full object-cover object-center" src="{{Storage::url($category->image)}}" >
-                        </div>
-
+                            </li>
+                        @endforeach
+                    </ul>
+                    <div class="col-span-3 bg-gray-100">
+                        <x-navigation-subcategories :category="$categories->first()"/>
                     </div>
                 </div>
             </div>
-        </div>
+            {{-- Menu phone --}}
+            <div class="bg-white h-full overflow-y-auto">
+                
+                <div class="container bg-gray-200 py-3 mb-2">
+                    @livewire('search')
+                </div>
+
+
+                <ul>
+                    @foreach ($categories as $category)
+                    <li class="text-trueGray-500 hover:bg-blue-500 hover:text-white">
+                        <a href="{{route('categories.show', $category)}}" class="py-2 px-4 text-sm flex items-center">
+                            <span class="flex justify-center w-9">
+                                {!!$category->icon!!}
+                            </span>
+                            {{$category->name}}
+                        </a>
+                    </li>
+                    @endforeach
+                </ul>
+
+                <p class="text-trueGray-500 px-6 my-2">USUARIOS</p>
+
+                @livewire('cart-mobil')
+
+                @auth
+                    <a href="{{ route('profile.show') }}" class="py-2 px-4 text-sm flex items-center text-trueGray-500 hover:bg-blue-500 hover:text-white">
+                        <span class="flex justify-center w-9">
+                            <i class="far fa-address-card"></i>
+                        </span>
+                        Perfil
+                    </a>
+                    <a href="" 
+                        onclick="event.preventDefault();
+                        document.getElementById('logout-form').submit()"
+
+                        class="py-2 px-4 text-sm flex items-center text-trueGray-500 hover:bg-blue-500 hover:text-white">
+                            <span class="flex justify-center w-9">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </span>
+                            Cerrar Sesión
+                    </a>
+                    <form id="logout-form" action="{{route ('logout')}}" method="POST" class="hidden" >
+                        @csrf
+                    </form>
+
+                @else 
+
+                    <a href="{{ route('login') }}" class="py-2 px-4 text-sm flex items-center text-trueGray-500 hover:bg-blue-500 hover:text-white">
+                        <span class="flex justify-center w-9">
+                            <i class="far fa-user-circle"></i>
+                        </span>
+                        Iniciar Sesión
+                    </a>
+                    <a href="{{ route('register') }}" class="py-2 px-4 text-sm flex items-center text-trueGray-500 hover:bg-blue-500 hover:text-white">
+                        <span class="flex justify-center w-9">
+                            <i class="fas fa-sign-in-alt"></i>
+                        </span>
+                        Registrarse
+                    </a>
+
+                @endauth
+            </div>
+
     </nav>
 </header>
+
+
